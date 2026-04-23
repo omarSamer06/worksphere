@@ -1,0 +1,38 @@
+const mongoose = require('mongoose');
+
+const leaveSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'User is required'],
+    },
+    startDate: {
+      type: Date,
+      required: [true, 'Start date is required'],
+    },
+    endDate: {
+      type: Date,
+      required: [true, 'End date is required'],
+    },
+    reason: {
+      type: String,
+      required: [true, 'Reason is required'],
+      trim: true,
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
+    },
+  },
+  { timestamps: true }
+);
+
+leaveSchema.pre('validate', async function () {
+  if (this.endDate && this.startDate && this.endDate < this.startDate) {
+    this.invalidate('endDate', 'End date must be after start date');
+  }
+});
+
+module.exports = mongoose.model('Leave', leaveSchema);
