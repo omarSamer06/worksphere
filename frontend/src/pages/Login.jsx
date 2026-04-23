@@ -158,7 +158,52 @@ const Login = () => {
             </button>
           </form>
 
-          <p className="text-center text-xs text-gray-400 mt-8">
+          {/* Access notice */}
+          <p className="text-center text-xs text-gray-400 mt-6 leading-relaxed">
+            Accounts are created by your organization.{' '}
+            <span className="text-gray-500">Contact your administrator if you don't have access.</span>
+          </p>
+
+          {/* Demo credentials */}
+          <div className="mt-6 rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-4">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-3">
+              Demo Accounts
+            </p>
+            <div className="space-y-2">
+              {[
+                { role: 'Admin',    email: 'admin@test.com',    color: 'text-red-500'    },
+                { role: 'Manager',  email: 'manager@test.com',  color: 'text-amber-500'  },
+                { role: 'Employee', email: 'employee@test.com', color: 'text-emerald-600' },
+              ].map(({ role, email, color }) => (
+                <button
+                  key={role}
+                  type="button"
+                  onClick={() => {
+                    setForm({ email, password: '123456' });
+                    setError(null);
+                  }}
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 transition-all group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className={`text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${color} bg-current/10`}
+                      style={{ backgroundColor: 'transparent' }}>
+                      <span className={color}>{role}</span>
+                    </span>
+                    <span className="text-xs text-gray-500 font-mono">{email}</span>
+                  </div>
+                  <span className="text-[10px] text-gray-300 group-hover:text-indigo-400 transition-colors font-medium">
+                    Use →
+                  </span>
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-gray-400 mt-3 text-center">
+              Password for all demo accounts:{' '}
+              <span className="font-mono font-semibold text-gray-500">123456</span>
+            </p>
+          </div>
+
+          <p className="text-center text-xs text-gray-400 mt-6">
             &copy; {new Date().getFullYear()} HR Management System
           </p>
         </div>
