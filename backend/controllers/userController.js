@@ -1,13 +1,22 @@
 const User = require('../models/userModel');
 
+const populateUser = (query) =>
+  query
+    .select('-password')
+    .populate('manager', 'name email')
+    .populate('department', 'name description')
+    .populate('position', 'title');
+
+const formatUser = (u) => ({
+  ...u,
+  remainingLeave: u.totalLeave - u.usedLeave,
+});
+
 // @desc    Get current authenticated user profile
 // @route   GET /api/v1/users/me
 const getMe = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user._id)
-      .select('-password')
-      .populate('manager', 'name email')
-      .lean();
+    const user = await populateUser(User.findById(req.user._id)).lean();
 
     if (!user) {
       const error = new Error('User not found');
@@ -18,10 +27,41 @@ const getMe = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: 'Profile retrieved successfully',
-      data: {
-        ...user,
-        remainingLeave: user.totalLeave - user.usedLeave,
-      },
+      data: formatUser(user),
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Update own profile (phone, address, hireDate)
+// @route   PUT /api/v1/users/me
+const updateProfile = async (req, res, next) => {
+  try {
+    const { phone, address, hireDate } = req.body;
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      const error = new Error('User not found');
+      error.statusCode = 404;
+      return next(error);
+    }
+
+    if (phone !== undefined) user.phone = phone;
+    if (address !== undefined) user.address = address;
+    if (hireDate !== undefined) user.hireDate = hireDate || null;
+
+    await user.save();
+    await user.populate([
+      { path: 'manager', select: 'name email' },
+      { path: 'department', select: 'name description' },
+      { path: 'position', select: 'title' },
+    ]);
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: formatUser(user.toObject()),
     });
   } catch (err) {
     next(err);
@@ -32,7 +72,7 @@ const getMe = async (req, res, next) => {
 // @route   POST /api/v1/users
 const createUser = async (req, res, next) => {
   try {
-    const { name, email, password, role, manager, totalLeave } = req.body;
+    const { name, email, password, role, manager, totalLeave, department, position, phone, address, hireDate } = req.body;
 
     if (!name || !email || !password) {
       const error = new Error('Name, email, and password are required');
@@ -47,23 +87,21 @@ const createUser = async (req, res, next) => {
       return next(error);
     }
 
-    const user = await User.create({ name, email, password, role, manager, totalLeave });
-    await user.populate('manager', 'name email');
+    const user = await User.create({
+      name, email, password, role, manager,
+      totalLeave, department, position, phone, address, hireDate,
+    });
+
+    await user.populate([
+      { path: 'manager', select: 'name email' },
+      { path: 'department', select: 'name description' },
+      { path: 'position', select: 'title' },
+    ]);
 
     res.status(201).json({
       success: true,
       message: 'User created successfully',
-      data: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        totalLeave: user.totalLeave,
-        usedLeave: user.usedLeave,
-        remainingLeave: user.totalLeave - user.usedLeave,
-        manager: user.manager,
-        createdAt: user.createdAt,
-      },
+      data: formatUser(user.toObject()),
     });
   } catch (err) {
     next(err);
@@ -74,20 +112,12 @@ const createUser = async (req, res, next) => {
 // @route   GET /api/v1/users
 const getAllUsers = async (req, res, next) => {
   try {
-    const users = await User.find()
-      .select('-password')
-      .populate('manager', 'name email')
-      .lean();
-
-    const result = users.map((u) => ({
-      ...u,
-      remainingLeave: u.totalLeave - u.usedLeave,
-    }));
+    const users = await populateUser(User.find()).lean();
 
     res.status(200).json({
       success: true,
       message: 'Users retrieved successfully',
-      data: result,
+      data: users.map(formatUser),
     });
   } catch (err) {
     next(err);
@@ -98,10 +128,7 @@ const getAllUsers = async (req, res, next) => {
 // @route   GET /api/v1/users/:id
 const getUserById = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id)
-      .select('-password')
-      .populate('manager', 'name email')
-      .lean();
+    const user = await populateUser(User.findById(req.params.id)).lean();
 
     if (!user) {
       const error = new Error('User not found');
@@ -112,18 +139,18 @@ const getUserById = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: 'User retrieved successfully',
-      data: { ...user, remainingLeave: user.totalLeave - user.usedLeave },
+      data: formatUser(user),
     });
   } catch (err) {
     next(err);
   }
 };
 
-// @desc    Update user
+// @desc    Update user (admin only)
 // @route   PUT /api/v1/users/:id
 const updateUser = async (req, res, next) => {
   try {
-    const { name, email, role, manager, totalLeave } = req.body;
+    const { name, email, role, manager, totalLeave, department, position, phone, address, hireDate } = req.body;
 
     const user = await User.findById(req.params.id);
     if (!user) {
@@ -137,36 +164,34 @@ const updateUser = async (req, res, next) => {
     if (role !== undefined) user.role = role;
     if (manager !== undefined) user.manager = manager || null;
     if (totalLeave !== undefined) user.totalLeave = totalLeave;
+    if (department !== undefined) user.department = department || null;
+    if (position !== undefined) user.position = position || null;
+    if (phone !== undefined) user.phone = phone;
+    if (address !== undefined) user.address = address;
+    if (hireDate !== undefined) user.hireDate = hireDate || null;
 
     await user.save();
-    await user.populate('manager', 'name email');
+    await user.populate([
+      { path: 'manager', select: 'name email' },
+      { path: 'department', select: 'name description' },
+      { path: 'position', select: 'title' },
+    ]);
 
     res.status(200).json({
       success: true,
       message: 'User updated successfully',
-      data: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        totalLeave: user.totalLeave,
-        usedLeave: user.usedLeave,
-        remainingLeave: user.totalLeave - user.usedLeave,
-        manager: user.manager,
-        updatedAt: user.updatedAt,
-      },
+      data: formatUser(user.toObject()),
     });
   } catch (err) {
     next(err);
   }
 };
 
-// @desc    Delete user
+// @desc    Delete user (admin only)
 // @route   DELETE /api/v1/users/:id
 const deleteUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id);
-
     if (!user) {
       const error = new Error('User not found');
       error.statusCode = 404;
@@ -185,4 +210,4 @@ const deleteUser = async (req, res, next) => {
   }
 };
 
-module.exports = { getMe, createUser, getAllUsers, getUserById, updateUser, deleteUser };
+module.exports = { getMe, updateProfile, createUser, getAllUsers, getUserById, updateUser, deleteUser };

@@ -8,6 +8,7 @@ const api = axios.create({
   },
 });
 
+// Attach token on every request
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -19,13 +20,26 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Guard: collapse concurrent 401s into a single redirect
+let isRedirecting = false;
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+
+    if (status === 401 && !isRedirecting) {
+      isRedirecting = true;
       localStorage.removeItem('token');
-      window.location.href = '/login';
+
+      // Reset flag after navigation completes so a fresh login session works
+      setTimeout(() => { isRedirecting = false; }, 3000);
+
+      if (!window.location.pathname.startsWith('/login')) {
+        window.location.replace('/login');
+      }
     }
+
     return Promise.reject(error);
   }
 );

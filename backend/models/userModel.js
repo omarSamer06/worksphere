@@ -27,6 +27,30 @@ const userSchema = new mongoose.Schema(
       enum: ['admin', 'manager', 'employee'],
       default: 'employee',
     },
+    phone: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    address: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    hireDate: {
+      type: Date,
+      default: null,
+    },
+    department: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Department',
+      default: null,
+    },
+    position: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Position',
+      default: null,
+    },
     totalLeave: {
       type: Number,
       default: 20,

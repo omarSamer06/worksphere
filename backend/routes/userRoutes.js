@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {
   getMe,
+  updateProfile,
   createUser,
   getAllUsers,
   getUserById,
@@ -10,8 +11,10 @@ const {
 } = require('../controllers/userController');
 const { protect, authorizeRoles } = require('../middleware/authMiddleware');
 
-// Must be defined before /:id to avoid param conflict
-router.get('/me', protect, getMe);
+// Own profile — must be before /:id
+router.route('/me')
+  .get(protect, getMe)
+  .put(protect, updateProfile);
 
 router
   .route('/')

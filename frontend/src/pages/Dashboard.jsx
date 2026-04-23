@@ -6,6 +6,10 @@ import StatCard from '../components/StatCard';
 import MyLeaves from './MyLeaves';
 import RequestLeave from './RequestLeave';
 import AllLeaves from './AllLeaves';
+import Profile from './Profile';
+import DepartmentManagement from './DepartmentManagement';
+import PositionManagement from './PositionManagement';
+import Recruitment from './Recruitment';
 
 const roleBadgeColor = {
   admin:    'bg-red-100 text-red-700',
@@ -16,10 +20,15 @@ const roleBadgeColor = {
 const employeeTabs = [
   { id: 'my-leaves',     label: 'My Leaves'     },
   { id: 'request-leave', label: 'Request Leave' },
+  { id: 'profile',       label: 'My Profile'    },
 ];
 
 const adminTabs = [
-  { id: 'all-leaves', label: 'All Leaves' },
+  { id: 'all-leaves',    label: 'All Leaves'    },
+  { id: 'recruitment',   label: 'Recruitment'   },
+  { id: 'departments',   label: 'Departments'   },
+  { id: 'positions',     label: 'Positions'     },
+  { id: 'profile',       label: 'My Profile'    },
 ];
 
 /* ── icons ── */
@@ -38,14 +47,14 @@ const IconClock = () => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>
 );
+const IconBriefcase = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+  </svg>
+);
 const IconCheck = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-  </svg>
-);
-const IconShield = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
   </svg>
 );
 
@@ -67,13 +76,28 @@ const LeaveBalanceBar = ({ profile, loading }) => {
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
         <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Leave Balance</p>
-        {profile.manager && (
-          <p className="text-xs text-gray-400">
-            Manager: <span className="font-medium text-gray-600">{profile.manager.name}</span>
-          </p>
-        )}
+        <div className="flex gap-3 flex-wrap">
+          {profile.department && (
+            <span className="text-xs text-gray-500">
+              <span className="text-gray-400">Dept:</span>{' '}
+              <span className="font-medium text-gray-700">{profile.department.name}</span>
+            </span>
+          )}
+          {profile.position && (
+            <span className="text-xs text-gray-500">
+              <span className="text-gray-400">Position:</span>{' '}
+              <span className="font-medium text-gray-700">{profile.position.title}</span>
+            </span>
+          )}
+          {profile.manager && (
+            <span className="text-xs text-gray-500">
+              <span className="text-gray-400">Manager:</span>{' '}
+              <span className="font-medium text-gray-700">{profile.manager.name}</span>
+            </span>
+          )}
+        </div>
       </div>
       <div className="flex items-end justify-between mb-2">
         <div className="flex gap-5">
@@ -93,10 +117,7 @@ const LeaveBalanceBar = ({ profile, loading }) => {
         <p className="text-xs text-gray-400">{Math.round(pct)}% used</p>
       </div>
       <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all ${barColor}`}
-          style={{ width: `${pct}%` }}
-        />
+        <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
       </div>
     </div>
   );
@@ -132,16 +153,22 @@ const useAdminStats = () => {
     setLoading(true);
     setError(null);
     try {
-      const [usersRes, leavesRes] = await Promise.all([
+      const [usersRes, leavesRes, deptsRes, candidatesRes] = await Promise.all([
         api.get('/users'),
         api.get('/leaves'),
+        api.get('/departments'),
+        api.get('/candidates'),
       ]);
       const leaves = leavesRes.data.data;
+      const candidates = candidatesRes.data.data;
       setStats({
-        totalUsers:     usersRes.data.data.length,
-        totalLeaves:    leaves.length,
-        pendingLeaves:  leaves.filter((l) => l.status === 'pending').length,
-        approvedLeaves: leaves.filter((l) => l.status === 'approved').length,
+        totalUsers:      usersRes.data.data.length,
+        totalLeaves:     leaves.length,
+        pendingLeaves:   leaves.filter((l) => l.status === 'pending').length,
+        approvedLeaves:  leaves.filter((l) => l.status === 'approved').length,
+        totalDepts:      deptsRes.data.data.length,
+        totalCandidates: candidates.length,
+        openCandidates:  candidates.filter((c) => !c.hired && c.status !== 'rejected').length,
       });
     } catch {
       setError('Failed to load statistics.');
@@ -154,7 +181,7 @@ const useAdminStats = () => {
   return { stats, loading, error, refetch: fetch };
 };
 
-const useEmployeeStats = (profile) => {
+const useEmployeeStats = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -181,6 +208,13 @@ const useEmployeeStats = (profile) => {
   return { stats, loading, error, refetch: fetch };
 };
 
+/* ── stat icon: building ── */
+const IconBuilding = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+  </svg>
+);
+
 /* ── main ── */
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -193,7 +227,7 @@ const Dashboard = () => {
   const { profile, loading: profileLoading, refetch: refetchProfile } = useProfile();
 
   const adminData    = useAdminStats();
-  const employeeData = useEmployeeStats(profile);
+  const employeeData = useEmployeeStats();
   const { stats, loading: statsLoading, error: statsError, refetch: refetchStats } =
     isEmployee ? employeeData : adminData;
 
@@ -209,14 +243,17 @@ const Dashboard = () => {
       case 'my-leaves':
         return <MyLeaves onLeaveChange={handleLeaveChange} />;
       case 'request-leave':
-        return (
-          <RequestLeave
-            onLeaveSubmit={handleLeaveChange}
-            remainingLeave={profile?.remainingLeave}
-          />
-        );
+        return <RequestLeave onLeaveSubmit={handleLeaveChange} remainingLeave={profile?.remainingLeave} />;
       case 'all-leaves':
         return <AllLeaves onLeaveChange={handleLeaveChange} />;
+      case 'recruitment':
+        return <Recruitment />;
+      case 'departments':
+        return <DepartmentManagement />;
+      case 'positions':
+        return <PositionManagement />;
+      case 'profile':
+        return <Profile />;
       default:
         return null;
     }
@@ -240,11 +277,7 @@ const Dashboard = () => {
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex flex-col items-end">
               <span className="text-xs font-mono text-gray-400 truncate max-w-[120px]">{user?.id}</span>
-              <span
-                className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold capitalize mt-0.5 ${
-                  roleBadgeColor[user?.role] ?? 'bg-gray-100 text-gray-600'
-                }`}
-              >
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold capitalize mt-0.5 ${roleBadgeColor[user?.role] ?? 'bg-gray-100 text-gray-600'}`}>
                 {user?.role ?? 'Unknown'}
               </span>
             </div>
@@ -270,26 +303,22 @@ const Dashboard = () => {
             </h1>
             <p className="text-gray-500 mt-0.5 text-sm">
               {isEmployee
-                ? 'Track and manage your leave requests.'
-                : 'Oversee team leave requests and manage employees.'}
+                ? 'Track your leave requests and manage your profile.'
+                : 'Oversee leaves, manage employees, departments and positions.'}
             </p>
           </div>
           <p className="text-xs text-gray-400">
             Session expires{' '}
             <span className="font-medium text-gray-600">
               {user?.exp
-                ? new Date(user.exp * 1000).toLocaleDateString('en-US', {
-                    month: 'short', day: 'numeric', year: 'numeric',
-                  })
+                ? new Date(user.exp * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                 : '—'}
             </span>
           </p>
         </div>
 
-        {/* ── Leave balance (employee only) ── */}
-        {isEmployee && (
-          <LeaveBalanceBar profile={profile} loading={profileLoading} />
-        )}
+        {/* ── Leave balance / org info (employee) ── */}
+        {isEmployee && <LeaveBalanceBar profile={profile} loading={profileLoading} />}
 
         {/* ── Stats ── */}
         {statsError && (
@@ -305,23 +334,25 @@ const Dashboard = () => {
             <StatCard label="Approved"        value={stats?.approvedLeaves} icon={<IconCheck />}    color="green"  loading={statsLoading} />
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard label="Total Users"     value={stats?.totalUsers}     icon={<IconUsers />}    color="indigo" loading={statsLoading} />
-            <StatCard label="Total Leaves"    value={stats?.totalLeaves}    icon={<IconCalendar />} color="blue"   loading={statsLoading} />
-            <StatCard label="Pending"         value={stats?.pendingLeaves}  icon={<IconClock />}    color="amber"  loading={statsLoading} />
-            <StatCard label="Approved"        value={stats?.approvedLeaves} icon={<IconCheck />}    color="green"  loading={statsLoading} />
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+            <StatCard label="Total Users"    value={stats?.totalUsers}      icon={<IconUsers />}      color="indigo" loading={statsLoading} />
+            <StatCard label="Departments"    value={stats?.totalDepts}      icon={<IconBuilding />}   color="blue"   loading={statsLoading} />
+            <StatCard label="Candidates"     value={stats?.totalCandidates} icon={<IconBriefcase />}  color="purple" loading={statsLoading} />
+            <StatCard label="Total Leaves"   value={stats?.totalLeaves}     icon={<IconCalendar />}   color="indigo" loading={statsLoading} />
+            <StatCard label="Pending"        value={stats?.pendingLeaves}   icon={<IconClock />}      color="amber"  loading={statsLoading} />
+            <StatCard label="Approved"       value={stats?.approvedLeaves}  icon={<IconCheck />}      color="green"  loading={statsLoading} />
           </div>
         )}
 
         {/* ── Tabs ── */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="border-b border-gray-100 px-6">
-            <nav className="flex gap-1 -mb-px">
+          <div className="border-b border-gray-100 px-6 overflow-x-auto">
+            <nav className="flex gap-1 -mb-px min-w-max">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-3.5 text-sm font-semibold border-b-2 transition-colors ${
+                  className={`px-4 py-3.5 text-sm font-semibold border-b-2 whitespace-nowrap transition-colors ${
                     activeTab === tab.id
                       ? 'border-indigo-600 text-indigo-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'

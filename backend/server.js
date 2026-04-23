@@ -10,23 +10,28 @@ const testRoutes = require('./routes/testRoutes');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const leaveRoutes = require('./routes/leaveRoutes');
+const departmentRoutes = require('./routes/departmentRoutes');
+const positionRoutes = require('./routes/positionRoutes');
+const candidateRoutes = require('./routes/candidateRoutes');
 const { errorMiddleware, notFound } = require('./middleware/errorMiddleware');
 
 connectDB();
 
 const app = express();
 
+const corsOptions = {
+  origin: process.env.FRONTEND_URL,
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+};
+
+// CORS must be first — handles preflight OPTIONS before anything else
+app.use(cors(corsOptions));
+
 // Body parsing
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
-// CORS
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL,
-    credentials: true,
-  })
-);
 
 // Security headers
 app.use(helmet());
@@ -51,6 +56,9 @@ app.use('/api/v1', testRoutes);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/leaves', leaveRoutes);
+app.use('/api/v1/departments', departmentRoutes);
+app.use('/api/v1/positions', positionRoutes);
+app.use('/api/v1/candidates', candidateRoutes);
 
 // 404 & central error handler
 app.use(notFound);
