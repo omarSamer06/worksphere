@@ -3,7 +3,7 @@ import Candidates from './Candidates';
 import AddCandidate from './AddCandidate';
 
 const Recruitment = () => {
-  const [view, setView] = useState('list'); // 'list' | 'add'
+  const [view, setView] = useState('list');
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleAdded = () => {
@@ -11,21 +11,11 @@ const Recruitment = () => {
     setView('list');
   };
 
-  return (
-    <div>
-      {view === 'add' ? (
-        <AddCandidate
-          onSuccess={handleAdded}
-          onCancel={() => setView('list')}
-        />
-      ) : (
-        <Candidates
-          key={refreshKey}
-          onAddNew={() => setView('add')}
-        />
-      )}
-    </div>
-  );
+  if (view === 'add') {
+    return <AddCandidate onSuccess={handleAdded} onCancel={() => setView('list')} />;
+  }
+
+  return <Candidates key={refreshKey} onAddNew={() => setView('add')} />;
 };
 
 export default Recruitment;
