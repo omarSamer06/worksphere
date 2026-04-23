@@ -27,9 +27,28 @@ const userSchema = new mongoose.Schema(
       enum: ['admin', 'manager', 'employee'],
       default: 'employee',
     },
+    totalLeave: {
+      type: Number,
+      default: 20,
+      min: [0, 'Total leave cannot be negative'],
+    },
+    usedLeave: {
+      type: Number,
+      default: 0,
+      min: [0, 'Used leave cannot be negative'],
+    },
+    manager: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
   },
   { timestamps: true }
 );
+
+userSchema.virtual('remainingLeave').get(function () {
+  return this.totalLeave - this.usedLeave;
+});
 
 userSchema.pre('save', async function () {
   if (!this.isModified('password')) return;

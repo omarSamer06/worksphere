@@ -3,11 +3,23 @@ import api from '../services/api';
 
 const today = () => new Date().toISOString().split('T')[0];
 
-const LeaveForm = ({ onSuccess }) => {
-  const [form, setForm] = useState({ startDate: '', endDate: '', reason: '' });
+const LEAVE_TYPES = [
+  { value: 'annual', label: 'Annual Leave' },
+  { value: 'sick',   label: 'Sick Leave'   },
+];
+
+const LeaveForm = ({ onSuccess, remainingLeave }) => {
+  const [form, setForm] = useState({ startDate: '', endDate: '', reason: '', type: 'annual' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+
+  const requestedDays =
+    form.startDate && form.endDate && form.endDate >= form.startDate
+      ? Math.ceil(
+          (new Date(form.endDate) - new Date(form.startDate)) / (1000 * 60 * 60 * 24)
+        ) + 1
+      : 0;
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -26,7 +38,7 @@ const LeaveForm = ({ onSuccess }) => {
     try {
       const { data } = await api.post('/leaves', form);
       setSuccess(true);
-      setForm({ startDate: '', endDate: '', reason: '' });
+      setForm({ startDate: '', endDate: '', reason: '', type: 'annual' });
       onSuccess?.(data.data);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to submit request. Please try again.');
@@ -34,6 +46,9 @@ const LeaveForm = ({ onSuccess }) => {
       setLoading(false);
     }
   };
+
+  const inputCls =
+    'w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition';
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -55,6 +70,41 @@ const LeaveForm = ({ onSuccess }) => {
         </div>
       )}
 
+      {/* Leave balance preview */}
+      {remainingLeave !== undefined && (
+        <div className="flex items-center justify-between bg-indigo-50 border border-indigo-100 rounded-lg px-4 py-3 text-sm">
+          <span className="text-indigo-700 font-medium">Remaining balance</span>
+          <div className="flex items-center gap-3">
+            <span className="font-bold text-indigo-800">{remainingLeave} days</span>
+            {requestedDays > 0 && (
+              <span className={`font-semibold text-xs px-2 py-0.5 rounded-full ${
+                requestedDays > remainingLeave
+                  ? 'bg-red-100 text-red-700'
+                  : 'bg-green-100 text-green-700'
+              }`}>
+                −{requestedDays} requested
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Leave type */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Leave Type</label>
+        <select
+          name="type"
+          value={form.type}
+          onChange={handleChange}
+          className={inputCls}
+        >
+          {LEAVE_TYPES.map((t) => (
+            <option key={t.value} value={t.value}>{t.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Dates */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
@@ -65,7 +115,7 @@ const LeaveForm = ({ onSuccess }) => {
             min={today()}
             value={form.startDate}
             onChange={handleChange}
-            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+            className={inputCls}
           />
         </div>
         <div>
@@ -77,11 +127,18 @@ const LeaveForm = ({ onSuccess }) => {
             min={form.startDate || today()}
             value={form.endDate}
             onChange={handleChange}
-            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+            className={inputCls}
           />
         </div>
       </div>
 
+      {requestedDays > 0 && (
+        <p className="text-xs text-gray-500 -mt-1">
+          Duration: <span className="font-semibold text-gray-700">{requestedDays} day{requestedDays !== 1 ? 's' : ''}</span>
+        </p>
+      )}
+
+      {/* Reason */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
         <textarea
@@ -91,7 +148,7 @@ const LeaveForm = ({ onSuccess }) => {
           value={form.reason}
           onChange={handleChange}
           placeholder="Briefly describe the reason for your leave…"
-          className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition resize-none"
+          className={`${inputCls} resize-none`}
         />
       </div>
 

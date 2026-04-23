@@ -2,7 +2,7 @@ import { useState } from 'react';
 import LeaveForm from '../components/LeaveForm';
 import LeaveCard from '../components/LeaveCard';
 
-const RequestLeave = ({ onLeaveSubmit }) => {
+const RequestLeave = ({ onLeaveSubmit, remainingLeave }) => {
   const [submitted, setSubmitted] = useState([]);
 
   const handleSuccess = (leave) => {
@@ -14,7 +14,7 @@ const RequestLeave = ({ onLeaveSubmit }) => {
     <div className="max-w-xl">
       <h2 className="text-base font-semibold text-gray-900 mb-4">Request Leave</h2>
       <div className="bg-gray-50 rounded-xl border border-gray-100 p-6 mb-6">
-        <LeaveForm onSuccess={handleSuccess} />
+        <LeaveForm onSuccess={handleSuccess} remainingLeave={remainingLeave} />
       </div>
 
       {submitted.length > 0 && (

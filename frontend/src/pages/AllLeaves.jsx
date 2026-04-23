@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import api from '../services/api';
 import LeaveCard from '../components/LeaveCard';
 import Loader from '../components/Loader';
+import { useAuth } from '../context/AuthContext';
 
 const STATUS_FILTERS = ['all', 'pending', 'approved', 'rejected'];
 
@@ -12,6 +13,7 @@ const filterBadgeColor = {
 };
 
 const AllLeaves = ({ onLeaveChange }) => {
+  const { user } = useAuth();
   const [leaves, setLeaves] = useState([]);
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
@@ -43,12 +45,11 @@ const AllLeaves = ({ onLeaveChange }) => {
 
   return (
     <div>
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <h2 className="text-base font-semibold text-gray-900">All Leave Requests</h2>
           {!loading && (
-            <div className="flex gap-1.5">
+            <div className="flex gap-1.5 flex-wrap">
               {Object.entries(counts).map(([status, count]) =>
                 count > 0 ? (
                   <span key={status} className={`text-xs font-semibold px-2 py-0.5 rounded-full capitalize ${filterBadgeColor[status]}`}>
@@ -101,6 +102,7 @@ const AllLeaves = ({ onLeaveChange }) => {
             <LeaveCard
               key={leave._id}
               leave={leave}
+              currentUser={user}
               showActions
               onStatusChange={handleStatusChange}
             />

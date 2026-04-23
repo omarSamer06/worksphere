@@ -1,10 +1,11 @@
 const Leave = require('../models/leaveModel');
+const User = require('../models/userModel');
 
 // @desc    Request a leave (employee)
 // @route   POST /api/v1/leaves
 const requestLeave = async (req, res, next) => {
   try {
-    const { startDate, endDate, reason } = req.body;
+    const { startDate, endDate, reason, type } = req.body;
     const userId = req.user._id;
 
     if (!startDate || !endDate || !reason) {
@@ -13,8 +14,38 @@ const requestLeave = async (req, res, next) => {
       return next(error);
     }
 
-    const leave = await Leave.create({ user: userId, startDate, endDate, reason });
-    await leave.populate('user', 'name email role');
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (end < start) {
+      const error = new Error('End date must be after start date');
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+
+    const employee = await User.findById(userId);
+    const remaining = employee.totalLeave - employee.usedLeave;
+
+    if (days > remaining) {
+      const error = new Error(
+        `Not enough leave balance. Requested: ${days} day(s), Remaining: ${remaining} day(s)`
+      );
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    const leave = await Leave.create({
+      user: userId,
+      type: type || 'annual',
+      startDate: start,
+      endDate: end,
+      days,
+      reason,
+    });
+
+    await leave.populate('user', 'name email role totalLeave usedLeave manager');
 
     res.status(201).json({
       success: true,
@@ -31,7 +62,7 @@ const requestLeave = async (req, res, next) => {
 const getMyLeaves = async (req, res, next) => {
   try {
     const leaves = await Leave.find({ user: req.user._id })
-      .populate('user', 'name email role')
+      .populate('user', 'name email role totalLeave usedLeave manager')
       .sort({ createdAt: -1 })
       .lean();
 
@@ -53,7 +84,11 @@ const getAllLeaves = async (req, res, next) => {
     const filter = status ? { status } : {};
 
     const leaves = await Leave.find(filter)
-      .populate('user', 'name email role')
+      .populate({
+        path: 'user',
+        select: 'name email role totalLeave usedLeave manager',
+        populate: { path: 'manager', select: '_id name email' },
+      })
       .sort({ createdAt: -1 })
       .lean();
 
@@ -67,11 +102,13 @@ const getAllLeaves = async (req, res, next) => {
   }
 };
 
-// @desc    Approve or reject a leave (admin/manager)
+// @desc    Approve or reject a leave (admin or assigned manager)
 // @route   PUT /api/v1/leaves/:id
 const updateLeaveStatus = async (req, res, next) => {
   try {
     const { status } = req.body;
+    const requesterId = req.user._id.toString();
+    const requesterRole = req.user.role;
 
     if (!status || !['approved', 'rejected'].includes(status)) {
       const error = new Error('Status must be "approved" or "rejected"');
@@ -79,10 +116,27 @@ const updateLeaveStatus = async (req, res, next) => {
       return next(error);
     }
 
-    const leave = await Leave.findById(req.params.id);
+    const leave = await Leave.findById(req.params.id).populate(
+      'user',
+      'name email role totalLeave usedLeave manager'
+    );
+
     if (!leave) {
       const error = new Error('Leave request not found');
       error.statusCode = 404;
+      return next(error);
+    }
+
+    // Authorization: admin always allowed; manager only if assigned to this employee
+    const isAdmin = requesterRole === 'admin';
+    const isAssignedManager =
+      requesterRole === 'manager' &&
+      leave.user.manager &&
+      leave.user.manager.toString() === requesterId;
+
+    if (!isAdmin && !isAssignedManager) {
+      const error = new Error('Not authorized to update this leave request');
+      error.statusCode = 403;
       return next(error);
     }
 
@@ -93,13 +147,26 @@ const updateLeaveStatus = async (req, res, next) => {
     }
 
     leave.status = status;
+
+    if (status === 'approved') {
+      await User.findByIdAndUpdate(leave.user._id, {
+        $inc: { usedLeave: leave.days },
+      });
+    }
+
     await leave.save();
-    await leave.populate('user', 'name email role');
+
+    // Re-populate with updated user balance
+    const updated = await Leave.findById(leave._id).populate({
+      path: 'user',
+      select: 'name email role totalLeave usedLeave manager',
+      populate: { path: 'manager', select: '_id name email' },
+    });
 
     res.status(200).json({
       success: true,
       message: `Leave ${status} successfully`,
-      data: leave,
+      data: updated,
     });
   } catch (err) {
     next(err);

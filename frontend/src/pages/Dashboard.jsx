@@ -14,7 +14,7 @@ const roleBadgeColor = {
 };
 
 const employeeTabs = [
-  { id: 'my-leaves',     label: 'My Leaves' },
+  { id: 'my-leaves',     label: 'My Leaves'     },
   { id: 'request-leave', label: 'Request Leave' },
 ];
 
@@ -43,9 +43,87 @@ const IconCheck = () => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>
 );
+const IconShield = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+  </svg>
+);
 
-/* ── stat fetch hooks ── */
-const useAdminStats = (active) => {
+/* ── leave balance bar ── */
+const LeaveBalanceBar = ({ profile, loading }) => {
+  if (loading) {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 animate-pulse">
+        <div className="h-4 bg-gray-100 rounded w-1/3 mb-3" />
+        <div className="h-2.5 bg-gray-100 rounded-full" />
+      </div>
+    );
+  }
+  if (!profile) return null;
+
+  const { totalLeave, usedLeave, remainingLeave } = profile;
+  const pct = totalLeave > 0 ? Math.min((usedLeave / totalLeave) * 100, 100) : 0;
+  const barColor = pct >= 90 ? 'bg-red-500' : pct >= 60 ? 'bg-amber-400' : 'bg-green-500';
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Leave Balance</p>
+        {profile.manager && (
+          <p className="text-xs text-gray-400">
+            Manager: <span className="font-medium text-gray-600">{profile.manager.name}</span>
+          </p>
+        )}
+      </div>
+      <div className="flex items-end justify-between mb-2">
+        <div className="flex gap-5">
+          <div>
+            <p className="text-xs text-gray-400 mb-0.5">Total</p>
+            <p className="text-xl font-bold text-gray-800">{totalLeave}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-400 mb-0.5">Used</p>
+            <p className="text-xl font-bold text-amber-600">{usedLeave}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-400 mb-0.5">Remaining</p>
+            <p className="text-xl font-bold text-green-600">{remainingLeave}</p>
+          </div>
+        </div>
+        <p className="text-xs text-gray-400">{Math.round(pct)}% used</p>
+      </div>
+      <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all ${barColor}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+};
+
+/* ── data hooks ── */
+const useProfile = () => {
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetch = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data } = await api.get('/users/me');
+      setProfile(data.data);
+    } catch {
+      setProfile(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetch(); }, [fetch]);
+  return { profile, loading, refetch: fetch };
+};
+
+const useAdminStats = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -60,10 +138,10 @@ const useAdminStats = (active) => {
       ]);
       const leaves = leavesRes.data.data;
       setStats({
-        totalUsers:    usersRes.data.data.length,
-        totalLeaves:   leaves.length,
-        pendingLeaves: leaves.filter((l) => l.status === 'pending').length,
-        approvedLeaves:leaves.filter((l) => l.status === 'approved').length,
+        totalUsers:     usersRes.data.data.length,
+        totalLeaves:    leaves.length,
+        pendingLeaves:  leaves.filter((l) => l.status === 'pending').length,
+        approvedLeaves: leaves.filter((l) => l.status === 'approved').length,
       });
     } catch {
       setError('Failed to load statistics.');
@@ -73,11 +151,10 @@ const useAdminStats = (active) => {
   }, []);
 
   useEffect(() => { fetch(); }, [fetch]);
-
   return { stats, loading, error, refetch: fetch };
 };
 
-const useEmployeeStats = (active) => {
+const useEmployeeStats = (profile) => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -101,11 +178,10 @@ const useEmployeeStats = (active) => {
   }, []);
 
   useEffect(() => { fetch(); }, [fetch]);
-
   return { stats, loading, error, refetch: fetch };
 };
 
-/* ── main component ── */
+/* ── main ── */
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -114,21 +190,35 @@ const Dashboard = () => {
   const tabs = isEmployee ? employeeTabs : adminTabs;
   const [activeTab, setActiveTab] = useState(tabs[0].id);
 
-  const adminData    = useAdminStats(!isEmployee);
-  const employeeData = useEmployeeStats(isEmployee);
-  const { stats, loading: statsLoading, error: statsError, refetch } =
+  const { profile, loading: profileLoading, refetch: refetchProfile } = useProfile();
+
+  const adminData    = useAdminStats();
+  const employeeData = useEmployeeStats(profile);
+  const { stats, loading: statsLoading, error: statsError, refetch: refetchStats } =
     isEmployee ? employeeData : adminData;
 
   const handleLogout = () => { logout(); navigate('/login'); };
 
-  const handleLeaveChange = () => refetch();
+  const handleLeaveChange = () => {
+    refetchStats();
+    if (isEmployee) refetchProfile();
+  };
 
   const renderTab = () => {
     switch (activeTab) {
-      case 'my-leaves':     return <MyLeaves onLeaveChange={handleLeaveChange} />;
-      case 'request-leave': return <RequestLeave onLeaveSubmit={handleLeaveChange} />;
-      case 'all-leaves':    return <AllLeaves onLeaveChange={handleLeaveChange} />;
-      default:              return null;
+      case 'my-leaves':
+        return <MyLeaves onLeaveChange={handleLeaveChange} />;
+      case 'request-leave':
+        return (
+          <RequestLeave
+            onLeaveSubmit={handleLeaveChange}
+            remainingLeave={profile?.remainingLeave}
+          />
+        );
+      case 'all-leaves':
+        return <AllLeaves onLeaveChange={handleLeaveChange} />;
+      default:
+        return null;
     }
   };
 
@@ -171,7 +261,7 @@ const Dashboard = () => {
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+      <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
         {/* ── Welcome ── */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
@@ -195,6 +285,11 @@ const Dashboard = () => {
             </span>
           </p>
         </div>
+
+        {/* ── Leave balance (employee only) ── */}
+        {isEmployee && (
+          <LeaveBalanceBar profile={profile} loading={profileLoading} />
+        )}
 
         {/* ── Stats ── */}
         {statsError && (
