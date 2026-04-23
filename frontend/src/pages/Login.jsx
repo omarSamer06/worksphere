@@ -1,12 +1,19 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login, token } = useAuth();
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const from = location.state?.from?.pathname || '/dashboard';
+
+  if (token) return <Navigate to="/dashboard" replace />;
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -19,8 +26,8 @@ const Login = () => {
     setError(null);
     try {
       const { data } = await api.post('/auth/login', form);
-      localStorage.setItem('token', data.token);
-      navigate('/');
+      login(data.data.token);
+      navigate(from, { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Please try again.');
     } finally {
