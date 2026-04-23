@@ -1,18 +1,26 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import api from '../services/api';
 import LeaveCard from '../components/LeaveCard';
+import Loader from '../components/Loader';
 
 const STATUS_FILTERS = ['all', 'pending', 'approved', 'rejected'];
 
-const AllLeaves = () => {
+const filterBadgeColor = {
+  pending:  'bg-amber-100 text-amber-700',
+  approved: 'bg-green-100 text-green-700',
+  rejected: 'bg-red-100 text-red-700',
+};
+
+const AllLeaves = ({ onLeaveChange }) => {
   const [leaves, setLeaves] = useState([]);
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+  const fetchLeaves = useCallback(() => {
     const params = filter !== 'all' ? { status: filter } : {};
     setLoading(true);
+    setError(null);
     api
       .get('/leaves', { params })
       .then(({ data }) => setLeaves(data.data))
@@ -20,16 +28,38 @@ const AllLeaves = () => {
       .finally(() => setLoading(false));
   }, [filter]);
 
+  useEffect(() => { fetchLeaves(); }, [fetchLeaves]);
+
   const handleStatusChange = (updated) => {
-    setLeaves((prev) =>
-      prev.map((l) => (l._id === updated._id ? updated : l))
-    );
+    setLeaves((prev) => prev.map((l) => (l._id === updated._id ? updated : l)));
+    onLeaveChange?.();
+  };
+
+  const counts = {
+    pending:  leaves.filter((l) => l.status === 'pending').length,
+    approved: leaves.filter((l) => l.status === 'approved').length,
+    rejected: leaves.filter((l) => l.status === 'rejected').length,
   };
 
   return (
     <div>
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-        <h2 className="text-lg font-semibold text-gray-900">All Leave Requests</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-base font-semibold text-gray-900">All Leave Requests</h2>
+          {!loading && (
+            <div className="flex gap-1.5">
+              {Object.entries(counts).map(([status, count]) =>
+                count > 0 ? (
+                  <span key={status} className={`text-xs font-semibold px-2 py-0.5 rounded-full capitalize ${filterBadgeColor[status]}`}>
+                    {count} {status}
+                  </span>
+                ) : null
+              )}
+            </div>
+          )}
+        </div>
+
         <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
           {STATUS_FILTERS.map((s) => (
             <button
@@ -48,22 +78,22 @@ const AllLeaves = () => {
       </div>
 
       {error && (
-        <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3 mb-4">
+        <div className="flex items-center justify-between text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3 mb-4">
           {error}
+          <button onClick={fetchLeaves} className="text-xs text-red-500 hover:underline ml-4 shrink-0">
+            Retry
+          </button>
         </div>
       )}
 
       {loading ? (
-        <div className="flex items-center justify-center py-16 text-gray-400 text-sm">
-          <svg className="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-          </svg>
-          Loading…
-        </div>
+        <Loader />
       ) : leaves.length === 0 ? (
-        <div className="text-sm text-gray-400 bg-gray-50 border border-gray-100 rounded-xl px-4 py-8 text-center">
-          No leave requests found.
+        <div className="text-sm text-gray-400 bg-gray-50 border border-gray-100 rounded-xl px-4 py-12 text-center">
+          <svg className="w-8 h-8 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          No leave requests found{filter !== 'all' ? ` with status "${filter}"` : ''}.
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
