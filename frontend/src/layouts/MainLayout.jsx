@@ -18,6 +18,8 @@ const ICONS = {
   briefcase:  'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
   building:   'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
   layers:     'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4',
+  clock:      'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
+  payroll:    'M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z',
   logout:     'M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1',
   menu:       'M4 6h16M4 12h16M4 18h16',
   x:          'M6 18L18 6M6 6l12 12',
@@ -81,14 +83,20 @@ const SidebarContent = ({ user, onLogout, onNav }) => {
 
         {isEmployee && (
           <>
+            <Divider label="Attendance" />
+            <NavItem to="/attendance" icon="clock" label="Attendance" onClick={onNav} />
             <Divider label="Leaves" />
             <NavItem to="/leaves" icon="calendar" label="My Leaves" onClick={onNav} />
             <NavItem to="/leaves/request" icon="plus" label="Request Leave" onClick={onNav} />
+            <Divider label="Payroll" />
+            <NavItem to="/payroll" icon="payroll" label="My Payslips" onClick={onNav} />
           </>
         )}
 
         {(isAdmin || isManager) && (
           <>
+            <Divider label="Attendance" />
+            <NavItem to="/attendance" icon="clock" label="Attendance" onClick={onNav} />
             <Divider label="Leaves" />
             <NavItem to="/leaves" icon="calendar" label="All Leaves" onClick={onNav} />
           </>
@@ -103,6 +111,8 @@ const SidebarContent = ({ user, onLogout, onNav }) => {
 
         {isAdmin && (
           <>
+            <Divider label="Payroll" />
+            <NavItem to="/payroll" icon="payroll" label="Payroll" onClick={onNav} />
             <Divider label="Organization" />
             <NavItem to="/departments" icon="building" label="Departments" onClick={onNav} />
             <NavItem to="/positions" icon="layers" label="Positions" onClick={onNav} />

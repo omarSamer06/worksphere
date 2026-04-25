@@ -13,6 +13,9 @@ const leaveRoutes = require('./routes/leaveRoutes');
 const departmentRoutes = require('./routes/departmentRoutes');
 const positionRoutes = require('./routes/positionRoutes');
 const candidateRoutes = require('./routes/candidateRoutes');
+const shiftRoutes      = require('./routes/shiftRoutes');
+const attendanceRoutes = require('./routes/attendanceRoutes');
+const payrollRoutes    = require('./routes/payrollRoutes');
 const { errorMiddleware, notFound } = require('./middleware/errorMiddleware');
 
 connectDB();
@@ -59,6 +62,9 @@ app.use('/api/v1/leaves', leaveRoutes);
 app.use('/api/v1/departments', departmentRoutes);
 app.use('/api/v1/positions', positionRoutes);
 app.use('/api/v1/candidates', candidateRoutes);
+app.use('/api/v1/shifts',     shiftRoutes);
+app.use('/api/v1/attendance', attendanceRoutes);
+app.use('/api/v1/payroll',    payrollRoutes);
 
 // 404 & central error handler
 app.use(notFound);

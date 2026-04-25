@@ -12,6 +12,8 @@ import Recruitment  from './pages/Recruitment';
 import DepartmentManagement from './pages/DepartmentManagement';
 import PositionManagement   from './pages/PositionManagement';
 import Profile      from './pages/Profile';
+import Attendance   from './pages/Attendance';
+import Payroll      from './pages/Payroll';
 
 /* Wraps a page in MainLayout inside a ProtectedRoute */
 const Protected = ({ children, roles }) => (
@@ -34,6 +36,12 @@ const App = () => (
         {/* Protected — any authenticated role */}
         <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
         <Route path="/profile"   element={<Protected><Profile /></Protected>} />
+
+        {/* Attendance — role-aware */}
+        <Route path="/attendance" element={<Protected><Attendance /></Protected>} />
+
+        {/* Payroll — employee sees own payslips, admin sees all */}
+        <Route path="/payroll" element={<Protected><Payroll /></Protected>} />
 
         {/* Leaves — role-aware component handles employee vs admin view */}
         <Route path="/leaves"         element={<Protected><LeavesPage /></Protected>} />

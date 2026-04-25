@@ -240,15 +240,18 @@ const Dashboard = () => {
       <div>
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-4">Quick Actions</h2>
         {isEmployee ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <QuickLink to="/leaves/request" icon="calendar" label="Request Leave" description="Submit a new leave request" color="indigo" />
-            <QuickLink to="/leaves" icon="clock" label="My Leaves" description="View your leave history" color="green" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <QuickLink to="/attendance"     icon="clock"     label="Attendance"    description="Clock in / clock out"       color="slate"  />
+            <QuickLink to="/leaves/request" icon="calendar"  label="Request Leave" description="Submit a new leave request" color="indigo" />
+            <QuickLink to="/leaves"         icon="check"     label="My Leaves"     description="View your leave history"    color="green"  />
+            <QuickLink to="/payroll"        icon="briefcase" label="Payslips"      description="View salary statements"     color="purple" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            <QuickLink to="/leaves" icon="calendar" label="Review Leaves" description={`${stats?.pendingLeaves ?? 0} pending approvals`} color="amber" />
-            {(isAdmin || isManager) && <QuickLink to="/recruitment" icon="briefcase" label="Recruitment" description="Manage candidates" color="blue" />}
-            {isAdmin && <QuickLink to="/departments" icon="building" label="Departments" description="Manage org structure" color="indigo" />}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <QuickLink to="/attendance"  icon="clock"      label="Attendance"    description="Monitor team punctuality"              color="slate"  />
+            <QuickLink to="/leaves"      icon="calendar"   label="Review Leaves" description={`${stats?.pendingLeaves ?? 0} pending`} color="amber"  />
+            <QuickLink to="/payroll"     icon="briefcase"  label="Payroll"       description="Generate monthly payroll"              color="green"  />
+            {(isAdmin || isManager) && <QuickLink to="/recruitment" icon="users" label="Recruitment" description="Manage candidates" color="blue" />}
           </div>
         )}
       </div>
