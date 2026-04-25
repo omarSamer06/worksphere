@@ -14,6 +14,7 @@ import PositionManagement   from './pages/PositionManagement';
 import Profile      from './pages/Profile';
 import Attendance   from './pages/Attendance';
 import Payroll      from './pages/Payroll';
+import Users        from './pages/Users';
 
 /* Wraps a page in MainLayout inside a ProtectedRoute */
 const Protected = ({ children, roles }) => (
@@ -51,6 +52,7 @@ const App = () => (
         <Route path="/recruitment" element={<Protected roles={['admin', 'manager']}><Recruitment /></Protected>} />
 
         {/* Admin org structure */}
+        <Route path="/users"       element={<Protected roles={['admin']}><Users /></Protected>} />
         <Route path="/departments" element={<Protected roles={['admin']}><DepartmentManagement /></Protected>} />
         <Route path="/positions"   element={<Protected roles={['admin']}><PositionManagement /></Protected>} />
 

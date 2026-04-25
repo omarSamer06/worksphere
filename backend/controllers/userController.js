@@ -150,7 +150,7 @@ const getUserById = async (req, res, next) => {
 // @route   PUT /api/v1/users/:id
 const updateUser = async (req, res, next) => {
   try {
-    const { name, email, role, manager, totalLeave, department, position, phone, address, hireDate } = req.body;
+    const { name, email, role, manager, totalLeave, department, position, phone, address, hireDate, salary } = req.body;
 
     const user = await User.findById(req.params.id);
     if (!user) {
@@ -159,16 +159,17 @@ const updateUser = async (req, res, next) => {
       return next(error);
     }
 
-    if (name !== undefined) user.name = name;
-    if (email !== undefined) user.email = email;
-    if (role !== undefined) user.role = role;
-    if (manager !== undefined) user.manager = manager || null;
+    if (name !== undefined)       user.name       = name;
+    if (email !== undefined)      user.email      = email;
+    if (role !== undefined)       user.role       = role;
+    if (manager !== undefined)    user.manager    = manager || null;
     if (totalLeave !== undefined) user.totalLeave = totalLeave;
+    if (salary !== undefined)     user.salary     = salary;
     if (department !== undefined) user.department = department || null;
-    if (position !== undefined) user.position = position || null;
-    if (phone !== undefined) user.phone = phone;
-    if (address !== undefined) user.address = address;
-    if (hireDate !== undefined) user.hireDate = hireDate || null;
+    if (position !== undefined)   user.position   = position || null;
+    if (phone !== undefined)      user.phone      = phone;
+    if (address !== undefined)    user.address    = address;
+    if (hireDate !== undefined)   user.hireDate   = hireDate || null;
 
     await user.save();
     await user.populate([
