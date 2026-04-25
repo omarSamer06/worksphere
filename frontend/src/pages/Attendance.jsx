@@ -65,7 +65,7 @@ const EmployeeAttendance = () => {
   const fetchToday = useCallback(async () => {
     setTodayLoading(true);
     try {
-      const { data } = await api.get('/attendance/today');
+      const { data } = await api.get('/api/v1/attendance/today');
       setToday(data.data);
     } catch { setToday(null); }
     finally { setTodayLoading(false); }
@@ -75,7 +75,7 @@ const EmployeeAttendance = () => {
     setHistLoading(true);
     try {
       const now = new Date();
-      const { data } = await api.get('/attendance/my', {
+      const { data } = await api.get('/api/v1/attendance/my', {
         params: { month: now.getMonth() + 1, year: now.getFullYear() },
       });
       setRecords(data.data);
@@ -89,7 +89,7 @@ const EmployeeAttendance = () => {
     setActioning('in');
     setError(null);
     try {
-      const { data } = await api.post('/attendance/clock-in');
+      const { data } = await api.post('/api/v1/attendance/clock-in');
       setToday(data.data);
       fetchHistory();
     } catch (err) {
@@ -101,7 +101,7 @@ const EmployeeAttendance = () => {
     setActioning('out');
     setError(null);
     try {
-      const { data } = await api.post('/attendance/clock-out');
+      const { data } = await api.post('/api/v1/attendance/clock-out');
       setToday(data.data);
       fetchHistory();
     } catch (err) {
@@ -272,7 +272,7 @@ const AdminAttendance = () => {
     try {
       const params = { month, year };
       if (statusFilter !== 'all') params.status = statusFilter;
-      const { data } = await api.get('/attendance', { params });
+      const { data } = await api.get('/api/v1/attendance', { params });
       setRecords(data.data);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load attendance.');
@@ -419,7 +419,7 @@ const ShiftManagement = () => {
   const fetchShifts = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await api.get('/shifts');
+      const { data } = await api.get('/api/v1/shifts');
       setShifts(data.data);
     } catch { setError('Failed to load shifts.'); }
     finally { setLoading(false); }
@@ -431,7 +431,7 @@ const ShiftManagement = () => {
     e.preventDefault();
     setCreating(true); setCreateError(null);
     try {
-      const { data } = await api.post('/shifts', form);
+      const { data } = await api.post('/api/v1/shifts', form);
       setShifts((p) => [...p, data.data].sort((a, b) => a.name.localeCompare(b.name)));
       setForm({ name: '', startTime: '09:00', endTime: '17:00', gracePeriodMinutes: 15 });
     } catch (err) { setCreateError(err.response?.data?.message || 'Failed to create shift.'); }
@@ -442,7 +442,7 @@ const ShiftManagement = () => {
     e.preventDefault();
     setSaving(true);
     try {
-      const { data } = await api.put(`/shifts/${editId}`, editForm);
+      const { data } = await api.put(`/api/v1/shifts/${editId}`, editForm);
       setShifts((p) => p.map((s) => s._id === editId ? data.data : s).sort((a, b) => a.name.localeCompare(b.name)));
       setEditId(null);
     } catch (err) { setError(err.response?.data?.message || 'Failed to update shift.'); }
@@ -453,7 +453,7 @@ const ShiftManagement = () => {
     if (!window.confirm('Delete this shift?')) return;
     setDeletingId(id);
     try {
-      await api.delete(`/shifts/${id}`);
+      await api.delete(`/api/v1/shifts/${id}`);
       setShifts((p) => p.filter((s) => s._id !== id));
     } catch (err) { setError(err.response?.data?.message || 'Failed to delete shift.'); }
     finally { setDeletingId(null); }

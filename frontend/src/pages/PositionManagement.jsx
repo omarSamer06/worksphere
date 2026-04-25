@@ -25,7 +25,7 @@ const PositionManagement = () => {
     setError(null);
     try {
       const [posRes, deptRes, userRes] = await Promise.all([
-        api.get('/positions'), api.get('/departments'), api.get('/users'),
+        api.get('/api/v1/positions'), api.get('/api/v1/departments'), api.get('/api/v1/users'),
       ]);
       setPositions(posRes.data.data);
       setDepartments(deptRes.data.data);
@@ -44,7 +44,7 @@ const PositionManagement = () => {
     setCreating(true);
     setCreateError(null);
     try {
-      const { data } = await api.post('/positions', {
+      const { data } = await api.post('/api/v1/positions', {
         title: form.title,
         department: form.department || undefined,
         manager: form.manager || undefined,
@@ -67,7 +67,7 @@ const PositionManagement = () => {
     e.preventDefault();
     setSaving(true);
     try {
-      const { data } = await api.put(`/positions/${editId}`, {
+      const { data } = await api.put(`/api/v1/positions/${editId}`, {
         title: editForm.title,
         department: editForm.department || null,
         manager: editForm.manager || null,
@@ -87,7 +87,7 @@ const PositionManagement = () => {
     if (!window.confirm('Delete this position?')) return;
     setDeletingId(id);
     try {
-      await api.delete(`/positions/${id}`);
+      await api.delete(`/api/v1/positions/${id}`);
       setPositions((prev) => prev.filter((p) => p._id !== id));
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to delete position.');

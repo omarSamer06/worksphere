@@ -55,7 +55,7 @@ const Login = () => {
 
   /* ── helpers ── */
   const doLogin = async (credentials) => {
-    const { data } = await api.post('/auth/login', credentials);
+    const { data } = await api.post('/api/v1/auth/login', credentials);
     login(data.data.token);
     navigate('/dashboard', { replace: true });
   };

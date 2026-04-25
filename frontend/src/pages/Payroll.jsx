@@ -121,7 +121,7 @@ const EmployeePayroll = () => {
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await api.get('/payroll/my');
+        const { data } = await api.get('/api/v1/payroll/my');
         setRecords(data.data);
       } catch { /* silent */ }
       finally { setLoading(false); }
@@ -220,7 +220,7 @@ const AdminPayroll = () => {
     setError(null);
     try {
       const params = filterMonth ? { month: filterMonth } : {};
-      const { data } = await api.get('/payroll', { params });
+      const { data } = await api.get('/api/v1/payroll', { params });
       setRecords(data.data);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load payroll records.');
@@ -234,7 +234,7 @@ const AdminPayroll = () => {
     setGenSuccess(null);
     setGenError(null);
     try {
-      const { data } = await api.post('/payroll/generate', { month: genMonth });
+      const { data } = await api.post('/api/v1/payroll/generate', { month: genMonth });
       setGenSuccess(data.message);
       fetchAll();
     } catch (err) {

@@ -30,7 +30,7 @@ const useStats = () => {
   const [loading, setLoading] = useState(true);
   const refetch = useCallback(() => {
     setLoading(true);
-    api.get('/dashboard/stats')
+    api.get('/api/v1/dashboard/stats')
       .then(({ data }) => setStats(data.data))
       .catch(() => setStats({}))
       .finally(() => setLoading(false));
@@ -43,7 +43,7 @@ const useProfile = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    api.get('/users/me')
+    api.get('/api/v1/users/me')
       .then(({ data }) => setProfile(data.data))
       .catch(() => {})
       .finally(() => setLoading(false));

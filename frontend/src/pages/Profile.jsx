@@ -29,7 +29,7 @@ const Profile = () => {
   const fetchProfile = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await api.get('/users/me');
+      const { data } = await api.get('/api/v1/users/me');
       setProfile(data.data);
       setForm({
         phone: data.data.phone || '',
@@ -56,7 +56,7 @@ const Profile = () => {
     setSaving(true);
     setError(null);
     try {
-      const { data } = await api.put('/users/me', form);
+      const { data } = await api.put('/api/v1/users/me', form);
       setProfile(data.data);
       setSuccess(true);
       setEditing(false);

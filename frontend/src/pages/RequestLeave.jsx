@@ -10,7 +10,7 @@ const RequestLeave = () => {
 
   const fetchProfile = useCallback(async () => {
     try {
-      const { data } = await api.get('/users/me');
+      const { data } = await api.get('/api/v1/users/me');
       setRemainingLeave(data.data.remainingLeave);
     } catch { /* non-critical */ }
   }, []);

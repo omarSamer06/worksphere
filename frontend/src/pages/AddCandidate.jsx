@@ -11,7 +11,7 @@ const AddCandidate = ({ onSuccess, onCancel }) => {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    api.get('/positions').then(({ data }) => setPositions(data.data)).catch(() => {});
+    api.get('/api/v1/positions').then(({ data }) => setPositions(data.data)).catch(() => {});
   }, []);
 
   const handleChange = (e) => {
@@ -32,7 +32,7 @@ const AddCandidate = ({ onSuccess, onCancel }) => {
         position: form.position || undefined,
         resume: form.resume || undefined,
       };
-      const { data } = await api.post('/candidates', payload);
+      const { data } = await api.post('/api/v1/candidates', payload);
       setSuccess(true);
       setForm({ name: '', email: '', phone: '', position: '', resume: '' });
       onSuccess?.(data.data);

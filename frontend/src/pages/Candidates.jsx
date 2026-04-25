@@ -38,7 +38,7 @@ const Candidates = ({ onAddNew }) => {
     setError(null);
     const params = filter !== 'all' ? { status: filter } : {};
     api
-      .get('/candidates', { params })
+      .get('/api/v1/candidates', { params })
       .then(({ data }) => setCandidates(data.data))
       .catch((err) => setError(err.response?.data?.message || 'Failed to load candidates.'))
       .finally(() => setLoading(false));
@@ -50,7 +50,7 @@ const Candidates = ({ onAddNew }) => {
     setUpdatingId(candidate._id);
     setActionError((p) => ({ ...p, [candidate._id]: null }));
     try {
-      const { data } = await api.put(`/candidates/${candidate._id}/status`, { status: newStatus });
+      const { data } = await api.put(`/api/v1/candidates/${candidate._id}/status`, { status: newStatus });
       setCandidates((prev) => prev.map((c) => (c._id === candidate._id ? data.data : c)));
     } catch (err) {
       setActionError((p) => ({ ...p, [candidate._id]: err.response?.data?.message || 'Update failed.' }));
@@ -64,7 +64,7 @@ const Candidates = ({ onAddNew }) => {
     setHiringId(candidate._id);
     setActionError((p) => ({ ...p, [candidate._id]: null }));
     try {
-      const { data } = await api.post(`/candidates/${candidate._id}/hire`);
+      const { data } = await api.post(`/api/v1/candidates/${candidate._id}/hire`);
       setHireResult({ name: data.data.user.name, tempPassword: data.data.tempPassword });
       setCandidates((prev) => prev.map((c) => c._id === candidate._id ? { ...c, hired: true } : c));
     } catch (err) {

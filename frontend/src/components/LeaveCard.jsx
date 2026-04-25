@@ -36,7 +36,7 @@ const LeaveCard = ({ leave, currentUser, showActions = false, onStatusChange }) 
     setLoading(status);
     setError(null);
     try {
-      const { data } = await api.put(`/leaves/${leave._id}`, { status });
+      const { data } = await api.put(`/api/v1/leaves/${leave._id}`, { status });
       onStatusChange?.(data.data);
     } catch (err) {
       setError(err.response?.data?.message || 'Action failed. Please try again.');

@@ -22,7 +22,7 @@ const DepartmentManagement = () => {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await api.get('/departments');
+      const { data } = await api.get('/api/v1/departments');
       setDepartments(data.data);
     } catch {
       setError('Failed to load departments.');
@@ -38,7 +38,7 @@ const DepartmentManagement = () => {
     setCreating(true);
     setCreateError(null);
     try {
-      const { data } = await api.post('/departments', form);
+      const { data } = await api.post('/api/v1/departments', form);
       setDepartments((prev) => [...prev, data.data].sort((a, b) => a.name.localeCompare(b.name)));
       setForm({ name: '', description: '' });
     } catch (err) {
@@ -57,7 +57,7 @@ const DepartmentManagement = () => {
     e.preventDefault();
     setSaving(true);
     try {
-      const { data } = await api.put(`/departments/${editId}`, editForm);
+      const { data } = await api.put(`/api/v1/departments/${editId}`, editForm);
       setDepartments((prev) =>
         prev.map((d) => (d._id === editId ? data.data : d)).sort((a, b) => a.name.localeCompare(b.name))
       );
@@ -73,7 +73,7 @@ const DepartmentManagement = () => {
     if (!window.confirm('Delete this department?')) return;
     setDeletingId(id);
     try {
-      await api.delete(`/departments/${id}`);
+      await api.delete(`/api/v1/departments/${id}`);
       setDepartments((prev) => prev.filter((d) => d._id !== id));
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to delete department.');

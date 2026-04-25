@@ -56,7 +56,7 @@ const EditPanel = ({ user, departments, positions, onClose, onSaved }) => {
         totalLeave: Number(form.totalLeave),
         manager:    form.manager    || null,
       };
-      const { data } = await api.put(`/users/${user._id}`, payload);
+      const { data } = await api.put(`/api/v1/users/${user._id}`, payload);
       onSaved(data.data);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update user.');
@@ -200,9 +200,9 @@ const Users = () => {
     setError(null);
     try {
       const [usersRes, deptsRes, posRes] = await Promise.all([
-        api.get('/users'),
-        api.get('/departments'),
-        api.get('/positions'),
+        api.get('/api/v1/users'),
+        api.get('/api/v1/departments'),
+        api.get('/api/v1/positions'),
       ]);
       setUsers(usersRes.data.data);
       setDepartments(deptsRes.data.data);

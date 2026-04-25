@@ -36,7 +36,7 @@ const LeaveForm = ({ onSuccess, remainingLeave }) => {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await api.post('/leaves', form);
+      const { data } = await api.post('/api/v1/leaves', form);
       setSuccess(true);
       setForm({ startDate: '', endDate: '', reason: '', type: 'annual' });
       onSuccess?.(data.data);
