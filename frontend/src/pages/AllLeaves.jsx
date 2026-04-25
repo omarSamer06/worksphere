@@ -20,7 +20,7 @@ const AllLeaves = () => {
     setLoading(true);
     setError(null);
     api
-      .get('/leaves', { params })
+      .get('/api/v1/leaves', { params })
       .then(({ data }) => setLeaves(data.data))
       .catch((err) => setError(err.response?.data?.message || 'Failed to load leave requests.'))
       .finally(() => setLoading(false));
