@@ -2,11 +2,7 @@
 
 WorkSphere is a full-stack HR Management System built using the MERN stack, designed to handle real-world business operations with a modern, role-based user experience.
 
----
 
-## 🌐 Live Demo
-
-🔗 https://your-app.vercel.app
 
 ---
 
@@ -223,14 +219,7 @@ npm run dev
 
 ---
 
-## 📌 Future Improvements
 
-* Advanced payroll (tax, insurance)
-* Email notifications
-* File uploads (documents)
-* Analytics dashboard
-
----
 
 ## 👨‍💻 Author
 
@@ -243,4 +232,3 @@ Full-Stack MERN Developer
 
 WorkSphere is designed to reflect real-world HR systems with a focus on usability, scalability, and clean architecture.
 
-If you like this project, feel free to ⭐ the repository!
